@@ -117,7 +117,7 @@ void FileBufferToImageBuffer(PThePeHeaders thePeHeaders, char** _i_buff,size_t* 
 				//oep入口点
 				if(_image_buffer_oep>_section_header[i].VirtualAddress && _image_buffer_oep < (_section_header[i].VirtualAddress + _section_header[i].SizeOfRawData))
 				{
-						printf("入口点OEP在第%d节中,名称为[%s],地址为%0X", i + 1, _section_header[i].Name, _image_buffer_oep);
+						printf("入口点OEP在第%d节中,名称为[%s],地址为%0X\n", i + 1, _section_header[i].Name, _image_buffer_oep);
 				}
 		}
 		/*拷贝头部信息， 后面两种方式都可以
@@ -128,7 +128,8 @@ void FileBufferToImageBuffer(PThePeHeaders thePeHeaders, char** _i_buff,size_t* 
 		DWORD  _headers_offset = _section_header[0].PointerToRawData;
 		MemoryCopy(thePeHeaders->fileBuff,_temp_ibuff, _headers_offset);
 		*iBuffSize=fileBufferSize;
-	
+		//删除FileBuff
+		delete thePeHeaders->fileBuff;
 }
 
 

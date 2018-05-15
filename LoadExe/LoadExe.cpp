@@ -28,9 +28,11 @@ int main(int argc, _TCHAR* argv[])
 	thePeHeaders.fileBuff=fileBuff;
 	//在FileBuffer中加载PE头部信息
 	LoadPeHeaders(&thePeHeaders);
-
+	//记录文件大小
+	DWORD sizeOfImage = thePeHeaders.OptionalHeader->SizeOfImage;
 	char* imageBuff=NULL;
 	size_t iBuffSize =0;
+	//将FileBuffer转换为内存镜像  并释放文件Buffer
 	FileBufferToImageBuffer(&thePeHeaders,&imageBuff,&iBuffSize);
 	if (imageBuff==NULL||iBuffSize==0)
 	{
@@ -39,18 +41,27 @@ int main(int argc, _TCHAR* argv[])
 
 	//将ImageBuff写入硬盘文件
 	//WriteBufferToFile(iBuffSize,imageBuff);
-	thePeHeaders.fileBuff=imageBuff;
+	//申请虚拟内存
+	CHAR* vir = (CHAR*)VirtualAlloc(NULL,sizeOfImage,MEM_COMMIT|MEM_RESERVE,PAGE_EXECUTE_READWRITE);
+	if(vir==NULL)
+	{
+		MessageBoxW(NULL,L"内存申请失败!",L"信息提示",MB_ICONERROR);
+	}
+
+	memcpy(vir,imageBuff,sizeOfImage);
+	delete imageBuff;
+	thePeHeaders.fileBuff=vir;
 	//在ImageBuff中加载PE头部信息
 	LoadPeHeaders(&thePeHeaders);
 	restoreIBuffImpTable(&thePeHeaders);
 
 	/* 修复重定位表 拉伸后的状态*/
-	restoreIbuffRelocationTable(imageBuff);
+	restoreIbuffRelocationTable(vir);
 	DWORD oldProtect=0;
 	//修改页属性
-	VirtualProtect(imageBuff,iBuffSize,PAGE_EXECUTE_READWRITE,&oldProtect);
+	//VirtualProtect(imageBuff,iBuffSize,PAGE_EXECUTE_READWRITE,&oldProtect);
 	//创建线程 执行加载的exe入口函数
-	HANDLE executeThread =  CreateThread(NULL,0,(LPTHREAD_START_ROUTINE)(imageBuff+thePeHeaders.OptionalHeader->AddressOfEntryPoint),filePath,0,NULL);
+	HANDLE executeThread =  CreateThread(NULL,0,(LPTHREAD_START_ROUTINE)(vir+thePeHeaders.OptionalHeader->AddressOfEntryPoint),filePath,0,NULL);
 
 
 	//等待加载的可执行文件执行完毕 程序退出
