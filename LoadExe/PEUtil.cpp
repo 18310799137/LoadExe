@@ -1,7 +1,7 @@
 #include "StdAfx.h"
 
 /**
- * 修复导入表
+ * 修复IAT表
  */
 void restoreIBuffImpTable(PThePeHeaders  thePeHeaders)
 {
@@ -43,13 +43,9 @@ void restoreIBuffImpTable(PThePeHeaders  thePeHeaders)
 				{
 					DWORD number = numOrName & 0x7FFFFFFF;
 					//序号导入
-					//	sprintf_s(buff, 100, "OriginalFirstThunk - 导入序号为:%d(%XH)   FirstThunk - %X  ", number, number, iatFunNameAddr);
 					//修复导入表中按序号导入的函数地址
 					DWORD funAddr = (DWORD)GetProcAddress(dllModule, MAKEINTRESOURCEA(number));
 					*addTemp = funAddr;
-					char sss[200] = { 0 };
-					sprintf_s(sss, 200, "number:%x funAddr:%x dllName:%s", number, funAddr, pData + impTable->Name);
-					printf("按序号导入：%s\n",sss);
 				}
 				else {
 					CHAR*  namefoaAddr =  numOrName + pData;
@@ -57,9 +53,7 @@ void restoreIBuffImpTable(PThePeHeaders  thePeHeaders)
 					//修复导入表中按名字导入的函数地址
 					DWORD funAddr = (DWORD)GetProcAddress(dllModule, (LPCSTR)impByName->Name);
 					*addTemp = funAddr;
-					char sss[200] = { 0 };
-					sprintf_s(sss, 200,  "Name:%s funAddr:%x dllName:%s", impByName->Name, funAddr, pData + impTable->Name);
-					printf("按名字导入：%s\n",sss);
+					printf("按名字导入Name:%s funAddr:%x dllName:%s", impByName->Name, funAddr, pData + impTable->Name);
 				}
 
 				//指向下一个INT表
@@ -97,7 +91,7 @@ void restoreIbuffRelocationTable(char * _i_buff)
 	DWORD   _image_base_offset = ((DWORD)_i_buff - _image_base);
 	//计算重定位表的块数量
 	int _lump_count = 0;
-	while (_first_relocation_table_addr->SizeOfBlock>0x10 && _first_relocation_table_addr->VirtualAddress)
+	while (_first_relocation_table_addr->SizeOfBlock>0xA && _first_relocation_table_addr->VirtualAddress)
 	{
 		printf("重定位表第%d块开始========================\n", ++_lump_count);
 		DWORD block = _first_relocation_table_addr->SizeOfBlock;

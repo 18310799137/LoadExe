@@ -29,7 +29,7 @@ void  ReadPEFileToBuffer(WCHAR* filePath,char** fileBuff,size_t* retFileSize)
 	long fileSize = ftell(fileRead);
 	fseek(fileRead, 0, SEEK_SET);
 	//创建文件大小的数组
-	char* _f_buff = new char[fileSize];
+	char* _f_buff = (char*)malloc(fileSize);
 	*fileBuff = _f_buff;
 	*retFileSize=fileSize;
 	fread(_f_buff, fileSize, 1,  fileRead);
@@ -91,7 +91,7 @@ void FileBufferToImageBuffer(PThePeHeaders thePeHeaders, char** _i_buff,size_t* 
 		//取出可选PE头中的 内存镜像大小，如果此值大于计算出的（最后节偏移+内存对齐）则使用此值做为 imagebuffer的大小
 		fileBufferSize = _size_image > fileBufferSize ? _size_image : fileBufferSize;
 		//创建内存镜像 填充可执行文件
-		*_i_buff = new char[fileBufferSize];
+		*_i_buff = (char*)malloc(fileBufferSize);
 		char* _temp_ibuff = *_i_buff;
 		//初始化为0
 		memset(_temp_ibuff, 0, fileBufferSize);
@@ -129,7 +129,7 @@ void FileBufferToImageBuffer(PThePeHeaders thePeHeaders, char** _i_buff,size_t* 
 		MemoryCopy(thePeHeaders->fileBuff,_temp_ibuff, _headers_offset);
 		*iBuffSize=fileBufferSize;
 		//删除FileBuff
-		delete thePeHeaders->fileBuff;
+		free(thePeHeaders->fileBuff);
 }
 
 
@@ -163,7 +163,7 @@ loop:
 			return;
 		}
 	}
-	wchar_t * filePath = new wchar_t[MAX_PATH];
+	wchar_t * filePath = (wchar_t*)malloc(MAX_PATH*2);
 	wmemset(filePath,0,MAX_PATH);
 	wcscpy(filePath,filePathBuffer);
 	*retPath=filePath;
